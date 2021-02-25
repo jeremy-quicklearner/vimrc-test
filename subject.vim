@@ -104,5 +104,4 @@ endfor
 call jer_pec#Run()
 redraw
 
-echo 'fresh subject'
 call writefile(['v'], s:dir . '/signal', 'as')
