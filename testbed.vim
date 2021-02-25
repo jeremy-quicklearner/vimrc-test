@@ -19,12 +19,15 @@ function! s:OnSignal(channel, message)
 endfunction
 
 let s:term_subs = [
+" Cursor positions are flaky, so disregard them
 \    [
 \        '^>',
 \        '|'
 \    ], [
 \        '\(|\)\@!>',
 \        '|'
+" Fully expand every instance of |@{count}, as sometimes Vim partially expands
+" them before writing to the file
 \    ], [
 \        '|\([^@|]\+\)@\(\d\+\)',
 \        '\=repeat("|" . submatch(1), submatch(2))'
@@ -69,6 +72,9 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     while g:vimrc_test_subject.signalcount ==# -1
         sleep 50m
     endwhile
+
+    " Toggle off/on the 'number' option to avoid that weird bug in older Vims
+    call term_sendkeys(termnr, ":set nonu\<cr>:set nu\<cr>:echo 'fresh subject'\<cr>")
 
     " Testbed is ready
     let g:vimrc_test_subject = {
