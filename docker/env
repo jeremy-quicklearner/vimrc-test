@@ -1,0 +1,6 @@
+# Include testbed Vim via testbed image
+FROM vimrc-test/testbed
+
+# Include subject Vim
+ARG SUBJECT
+COPY ${SUBJECT} /usr/local/vim-subject

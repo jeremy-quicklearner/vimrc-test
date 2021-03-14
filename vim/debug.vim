@@ -66,6 +66,7 @@ let s:wince_winid = -1
 let s:wince_bufnr = -1
 let s:message_winid = -1
 let s:message_bufnr = -1
+let s:badsess_bufnr = -1
 
 let s:err_winid = -1
 let s:err_bufnr = -1
@@ -92,7 +93,10 @@ function! s:Inspect(linenr)
     let capdir = s:sessiondir . '/' . sha256(subtrace)
 
     if !isdirectory(capdir)
-        throw 'No capture found for subtrace ' . subtrace
+        let capdir = 'expect/' . sha256(subtrace)
+    endif
+    if !isdirectory(capdir)
+        throw 'No capture found at ' . sha256(subtrace)
     endif
 
     if !filereadable(capdir . '/trace')
@@ -155,69 +159,101 @@ function! VimrcTestDebugDown()
 endfunction
 
 function! VimrcTestDebugLoad(sessiondir)
-    if !filereadable(a:sessiondir . '/last')
-        throw 'Bad session'
-    endif
     let s:sessiondir = a:sessiondir
-    let lasthash = readfile(s:sessiondir . '/last')[0]
-    let trace = readfile(s:sessiondir . '/' . lasthash . '/trace')[0]
-    let steps = []
-    while !empty(trace)
-        if trace !~# '^\$\$'
-            throw 'Bad trace'
+    if filereadable(a:sessiondir . '/last')
+        let lasthash = readfile(s:sessiondir . '/last')[0]
+        let trace = readfile(s:sessiondir . '/' . lasthash . '/trace')[0]
+        let steps = []
+        while !empty(trace)
+            if trace !~# '^\$\$'
+                throw 'Bad trace'
+            endif
+            let [item, itemstartidx, itemendidx] = matchstrpos(
+           \    trace,
+           \    '^\$\$.\{-}\$\$'
+           \)
+            let trace = trace[itemendidx:]
+            call add(steps, item[2:-3])
+        endwhile
+
+        let s:trace_bufnr = bufnr('Session', 1)
+        silent buffer Session
+        call setbufvar(s:trace_bufnr, '&buftype', 'nofile')
+        call setbufvar(s:trace_bufnr, '&swapfile', 0)
+        call setbufvar(s:trace_bufnr, '&filetype', 'trace')
+        call setbufline(s:trace_bufnr, 1, steps)
+        call setbufvar(s:trace_bufnr, '&modifiable', 0)
+        call setbufvar(s:trace_bufnr, '&undolevels', -1)
+        topleft split
+        5wincmd _
+        let s:trace_winid = win_getid()
+
+        wincmd w
+        vsplit
+
+        let s:term_winid = win_getid()
+
+        wincmd w
+        60wincmd |
+        let s:wince_bufnr = bufnr('Wince', 1)
+        silent buffer Wince
+        call setbufvar(s:wince_bufnr, '&buftype', 'nofile')
+        call setbufvar(s:wince_bufnr, '&swapfile', 0)
+        call setbufvar(s:wince_bufnr, '&filetype', 'json')
+        call setbufvar(s:wince_bufnr, '&undolevels', -1)
+        split
+        let s:wince_winid = win_getid()
+
+        wincmd w
+        let s:message_winid = win_getid()
+        10wincmd _
+        let s:message_bufnr = bufnr('Messages', 1)
+        silent buffer Messages
+        call setbufvar(s:message_bufnr, '&buftype', 'nofile')
+        call setbufvar(s:message_bufnr, '&swapfile', 0)
+        call setbufvar(s:message_bufnr, '&filetype', 'text')
+        call setbufvar(s:message_bufnr, '&undolevels', -1)
+
+        nnoremap K :silent call VimrcTestDebugUp()<cr>
+        nnoremap J :silent call VimrcTestDebugDown()<cr>
+
+        call win_gotoid(s:trace_winid)
+    else
+        let s:badsess_bufnr = bufnr('Bad Session')
+        let s:err_bufnr = bufnr('Error', 1)
+        silent buffer Error
+        call setbufvar(s:badsess_bufnr, '&buftype', 'nofile')
+        call setbufvar(s:badsess_bufnr, '&swapfile', 0)
+        call setbufvar(s:badsess_bufnr, '&filetype', 'text')
+        call setbufvar(s:badsess_bufnr, '&undolevels', -1)
+        call setbufline(s:badsess_bufnr, 1, 'Bad Session. Bug in test code.')
+    endif
+
+    if filereadable(s:sessiondir . '/stall')
+        if !filereadable(s:sessiondir . '/err')
+            throw 'Bug in test code. /stall without /err'
         endif
-        let [item, itemstartidx, itemendidx] = matchstrpos(
-       \    trace,
-       \    '^\$\$.\{-}\$\$'
-       \)
-        let trace = trace[itemendidx:]
-        call add(steps, item[2:-3])
-    endwhile
+        tabnew
+        let errtext = readfile(s:sessiondir . '/err')
+        let s:err_bufnr = bufnr('Error', 1)
+        silent buffer Error
+        call setbufvar(s:err_bufnr, '&buftype', 'nofile')
+        call setbufvar(s:err_bufnr, '&swapfile', 0)
+        call setbufvar(s:err_bufnr, '&filetype', 'err')
+        call setbufline(s:err_bufnr, 1, errtext)
+        call setbufvar(s:err_bufnr, '&modifiable', 0)
+        call setbufvar(s:err_bufnr, '&undolevels', -1)
+        topleft split
+        5wincmd _
+        let s:err_winid = win_getid()
 
-    let s:trace_bufnr = bufnr('Session', 1)
-    silent buffer Session
-    call setbufvar(s:trace_bufnr, '&buftype', 'nofile')
-    call setbufvar(s:trace_bufnr, '&swapfile', 0)
-    call setbufvar(s:trace_bufnr, '&filetype', 'trace')
-    call setbufline(s:trace_bufnr, 1, steps)
-    call setbufvar(s:trace_bufnr, '&modifiable', 0)
-    call setbufvar(s:trace_bufnr, '&undolevels', -1)
-    topleft split
-    5wincmd _
-    let s:trace_winid = win_getid()
+        wincmd w
+        let termdiff_winid = win_getid()
+        call win_gotoid(termdiff_winid)
+        set nowrap
+        call term_dumpload(s:sessiondir . '/stall', {'curwin':1})
 
-    wincmd w
-    vsplit
-
-    let s:term_winid = win_getid()
-
-    wincmd w
-    60wincmd |
-    let s:wince_bufnr = bufnr('Wince', 1)
-    silent buffer Wince
-    call setbufvar(s:wince_bufnr, '&buftype', 'nofile')
-    call setbufvar(s:wince_bufnr, '&swapfile', 0)
-    call setbufvar(s:wince_bufnr, '&filetype', 'json')
-    call setbufvar(s:wince_bufnr, '&undolevels', -1)
-    split
-    let s:wince_winid = win_getid()
-
-    wincmd w
-    let s:message_winid = win_getid()
-    10wincmd _
-    let s:message_bufnr = bufnr('Messages', 1)
-    silent buffer Messages
-    call setbufvar(s:message_bufnr, '&buftype', 'nofile')
-    call setbufvar(s:message_bufnr, '&swapfile', 0)
-    call setbufvar(s:message_bufnr, '&filetype', 'text')
-    call setbufvar(s:message_bufnr, '&undolevels', -1)
-
-    nnoremap K :silent call VimrcTestDebugUp()<cr>
-    nnoremap J :silent call VimrcTestDebugDown()<cr>
-
-    call win_gotoid(s:trace_winid)
-
-    if filereadable(s:sessiondir . '/err')
+    elseif exists('lasthash') && filereadable(s:sessiondir . '/err')
         call mkdir('difftmp', 'p')
 
         tabnew

@@ -12,45 +12,60 @@
 
 " The testbed consumes a 'trace' - a string of keys with escape sequences
 " that indicate when to perform a capture, when to resize the terminal, etc
+let s:subjectscript = split(expand('<sfile>:p:h') . '/subject.vim')[-1]
+
+if !exists('g:vimrc_test_expectpath')
+    let g:vimrc_test_expectpath = 'expect'
+endif
 
 let g:vimrc_test_subject = {'signalcount':-1}
 function! s:OnSignal(channel, message)
     let g:vimrc_test_subject.signalcount += 1
 endfunction
 
-let s:term_subs = [
+let s:term_subs = []
 " Cursor positions are flaky, so disregard them
-\    [
-\        '^>',
-\        '|'
-\    ], [
-\        '\(|\)\@!>',
-\        '|'
+call add(s:term_subs, [ '^>', '|' ])
+call add(s:term_subs, [ '\(|\)\@!>', '|' ])
 " Fully expand every instance of |@{count}, as sometimes Vim partially expands
 " them before writing to the file
-\    ], [
-\        '|\([^@|]\+\)@\(\d\+\)',
-\        '\=repeat("|" . submatch(1), submatch(2))'
-\    ], [
-\        '|\(.\)+\([^@|]*\)|\(.\)\([|$]\)',
-\        '|\1+\2|\3+\2\4'
-\    ]
-\]
+call add(s:term_subs, [ '|\([^@|]\+\)@\(\d\+\)', '\=repeat("|" . submatch(1), submatch(2))' ])
+call add(s:term_subs, [ '|\(.\)+\([^@|]*\)|\(.\)\([|$]\)', '|\1+\2|\3+\2\4' ])
+
+function! s:WaitForSignal(unchangedsignalcount)
+    let termnr = g:vimrc_test_subject.termnr
+    let row = term_getsize(termnr)[0]
+    while g:vimrc_test_subject.signalcount ==# a:unchangedsignalcount
+        if term_getstatus(termnr) !~# 'running'
+            throw 'Subject crashed'
+        endif
+        if term_getline(termnr, row) ==#
+       \   'Press ENTER or type command to continue'
+            call term_dumpwrite(termnr, g:vimrc_test_subject.dir . '/stall')
+            throw 'Subject stalled'
+        endif
+
+        sleep 50m
+    endwhile
+endfunction
 
 function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     if g:vimrc_test_subject.signalcount !=# -1
         throw 'Testbed already started'
     endif
 
+    set laststatus=2
+    set showtabline=2
+
+    " This directory will contain files used for communication between the
+    " testbed and subject
+    call mkdir(a:sessiondir, 'p')
+    silent call system('rm -rf ' . a:sessiondir . '/*')
+
     " Need three extra rows for the Testbed Vim instance - tabline, statusline,
     " and ex command line
     let &lines=str2nr(a:rows) + 3
     let &columns=str2nr(a:cols)
-
-    " This directory will contain files used for communication between the
-    " testbed and subject
-    call delete(a:sessiondir, 'rf')
-    call mkdir(a:sessiondir, 'p')
 
     " Create a new file - the Signal File
     let signalfile = a:sessiondir . '/signal'
@@ -64,27 +79,26 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
 
     " Start the Subject Vim instance in a terminal window. Make it source
     " subject.vim on startup and tell it the name of the signal file
-    let termnr = term_start([a:subjectpath, '-S', 'subject.vim'], {'curwin':1})
+    enew!
+    let termnr = term_start(
+   \    [a:subjectpath, '-S', s:subjectscript],
+   \    {'curwin':1}
+   \)
     call term_sendkeys(termnr, a:sessiondir . ' ')
-
-    " Wait for the subject to write to the signal file, indicating it's up and
-    " running
-    while g:vimrc_test_subject.signalcount ==# -1
-        sleep 50m
-    endwhile
 
     " Toggle off/on the 'number' option to avoid that weird bug in older Vims
     call term_sendkeys(termnr, ":set nonu\<cr>:set nu\<cr>:echo 'fresh subject'\<cr>")
 
-    " Testbed is ready
-    let g:vimrc_test_subject = {
-   \    'termnr': termnr,
-   \    'dir': a:sessiondir,
-   \    'job': job,
-   \    'channel': channel,
-   \    'signalcount': 0,
-   \    'trace': '$$START' . a:rows . ',' . a:cols . '$$'
-   \}
+    " Testbed will be ready once thge signal arrives
+    let g:vimrc_test_subject.termnr = termnr
+    let g:vimrc_test_subject.dir = a:sessiondir
+    let g:vimrc_test_subject.job = job
+    let g:vimrc_test_subject.channel = channel
+    let g:vimrc_test_subject.trace = '$$START' . a:rows . ',' . a:cols . '$$'
+
+    " Wait for the subject to write to the signal file, indicating it's up and
+    " running
+    call s:WaitForSignal(-1)
 endfunction
 
 " Perform a capture
@@ -118,9 +132,7 @@ function! VimrcTestBedCapture()
     " Wait for that character to appear in the channel from tailing the signal
     " file, and for any terminal updates. This avoids dumping the terminal
     " before the Subject is ready
-    while g:vimrc_test_subject.signalcount ==# unchangedsignalcount
-        sleep 50m
-    endwhile
+    call s:WaitForSignal(unchangedsignalcount)
 
     call term_wait(g:vimrc_test_subject.termnr)
 
@@ -131,7 +143,7 @@ function! VimrcTestBedCapture()
     endtry
 
     " If an expected capture exists, compare against it
-    let expcapdir = 'expect/' . capname
+    let expcapdir = g:vimrc_test_expectpath . '/' . capname
     if isdirectory(expcapdir)
         " Trace
         let act = g:vimrc_test_subject.trace
@@ -241,7 +253,7 @@ function! VimrcTestBedStop()
     let g:vimrc_test_subject = {'signalcount':-1}
 endfunction
 
-function! VimrcTestBedExecuteTrace(subjectpath, sessiondir, trace)
+function! VimrcTestBedExecuteTrace(subjectpath, sessiondir, trace, finish)
     let remainingtrace = a:trace
     try
         while !empty(remainingtrace)
@@ -270,11 +282,16 @@ function! VimrcTestBedExecuteTrace(subjectpath, sessiondir, trace)
             else
                 throw 'Bad trace item: ' . item
             endif
+            if filereadable(a:sessiondir . '/err')
+                return '[FAIL] ' . a:label . ': ' . readfile(a:sessiondir . '/err')[-1]
+            endif
         endwhile
     catch /.*/
         call writefile([v:throwpoint, v:exception], a:sessiondir . '/err', 's')
     finally
-        call writefile([sha256(g:vimrc_test_subject.trace)], a:sessiondir . '/last', 's')
-        call VimrcTestBedStop()
+        if a:finish && g:vimrc_test_subject.signalcount !=# -1
+            call writefile([sha256(g:vimrc_test_subject.trace)], a:sessiondir . '/last', 's')
+            call VimrcTestBedStop()
+        endif
     endtry
 endfunction

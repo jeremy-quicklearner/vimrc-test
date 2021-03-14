@@ -1,0 +1,23 @@
+FROM ubuntu
+
+# Access to Vim scripts for test execution
+VOLUME /etc/vimrc-test/vim-exec
+
+# Access to vimrc
+VOLUME /root/vim
+
+# Access to expected values
+VOLUME /etc/vimrc-test/expect
+
+# Access to test results
+VOLUME /etc/vimrc-test/session
+
+# Include testbed Vim
+COPY testbed /usr/local/vim-testbed
+
+# Indicate that this is a testbed container
+# Git needed by vim-plug
+RUN mkdir /etc/vimrc-test-istest && \
+    apt-get -y update && \
+    apt-get -y install git && \
+    rm -rf /var/lib/apt/lists/*

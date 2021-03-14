@@ -1,19 +1,34 @@
 source <sfile>:p:h/testbed.vim
 source <sfile>:p:h/label.vim
 
+let s:labelpath = split(expand('<sfile>:p:h') . '/label.vim')[-1]
+
 " Keys typed so far, not yet recorded
 let s:sofar = ''
 
-function! s:Start(rows, cols)
-    if a:rows + 3 ># &lines
-        throw 'Need a taller terminal to accomodate ' . a:rows . ' rows'
-    endif
+function! s:Start(startfrom, rows, cols)
+    if empty(a:startfrom)
+        if a:rows + 3 ># &lines
+            throw 'Need a taller terminal to accomodate ' . a:rows . ' rows'
+        endif
 
-    if a:cols ># &columns
-        throw 'Need a wider terminal to accomodate ' . a:cols . ' columns'
-    endif
+        if a:cols ># &columns
+            throw 'Need a wider terminal to accomodate ' . a:cols . ' columns'
+        endif
 
-    call VimrcTestBedStart(v:progpath, 'record-' . string(getpid()), a:rows, a:cols)
+        call VimrcTestBedStart(v:progpath, g:vimrc_test_sessionname, a:rows, a:cols)
+    else
+        if has_key(g:vimrc_test_label, a:startfrom)
+            let tracehash = g:vimrc_test_label[a:startfrom]
+        elseif has_key(g:vimrc_test_label_tp, a:startfrom)
+            let tracehash = g:vimrc_test_label_tp[a:startfrom]
+        else
+            throw 'Cannot start recording from nonexistent label ' . a:startfrom
+        endif
+
+        let trace = readfile(g:vimrc_test_expectpath . '/' . tracehash . '/trace')[0]
+        call VimrcTestBedExecuteTrace(v:progpath, g:vimrc_test_sessionname, trace, 0)
+    endif
 endfunction
 
 function! s:RecordKeys()
@@ -41,7 +56,7 @@ function! s:Escape()
    \    'Select an option:',
    \    '1. Pass ''$'' keystroke to subject',
    \    '2. Capture',
-   \    '3. Stop recording',
+   \    '3. Stop Recording',
    \    '4. Resize terminal'
    \])
     if choice ==# 1
@@ -62,7 +77,8 @@ function! s:Escape()
             if empty(label)
                 break
             endif
-            if has_key(g:vimrc_test_label, label)
+            if has_key(g:vimrc_test_label, label) ||
+           \   has_key(g:vimrc_test_label_tp, label)
                 echo 'Label ' . label . ' is already in use'
                 let label = '$NO$LABEL$'
             endif
@@ -78,16 +94,27 @@ function! s:Escape()
             exit
         endif
         call delete(dir . '/last')
-        call mkdir('expect', 'p')
-        echo system('cp -rv ' . dir . '/* expect/')
+        call mkdir(g:vimrc_test_expectpath, 'p')
+        call system('cp -rv ' . dir . '/* ' . g:vimrc_test_expectpath .. '/')
         call system('rm -r ' . dir)
+        let choice = inputlist([
+       \    "\nUse label " . label . " as testpoint?",
+       \    '1. Yes',
+       \    '2. No'
+       \])
+        if choice ==# 1
+            let labeldict = 'g:vimrc_test_label_tp'
+        " Default to No
+        else
+            let labeldict = 'g:vimrc_test_label'
+        endif
         call writefile([
-       \    'let g:vimrc_test_label.' .
+       \    'let ' . labeldict . '.' .
        \    label .
        \    ' = "' .
        \    finalhash .
        \    '"'
-       \], 'label.vim', 'a')
+       \], s:labelpath, 'a')
         exit
     elseif choice ==# 4
         let rows = input("\nRows? (current: " . string(&lines - 3) . ') ')
@@ -117,11 +144,9 @@ function! VimrcTestRecordLoop()
     call term_sendkeys(g:vimrc_test_subject.termnr, chr)
 endfunction
 
-function! VimrcTestRecord()
-    call s:Start(&lines - 3, &columns)
+function! VimrcTestRecord(startfrom)
+    call s:Start(a:startfrom, &lines - 3, &columns)
     while 1
         call VimrcTestRecordLoop()
     endwhile
 endfunction
-
-call VimrcTestRecord()

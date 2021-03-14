@@ -10,22 +10,24 @@ elseif exists('jsonencode')
 
 " Older
 else
+    let s:t = jer_util#Types()
     function! s:Json(expr)
         let texpr = type(a:expr)
-        if texpr ==# v:t_number
+        if texpr ==# s:t.number
             return string(a:expr)
-        elseif texpr ==# v:t_string
+        elseif texpr ==# s:t.string
             return '"' . a:expr . '"'
-        elseif texpr ==# v:t_list
+        elseif texpr ==# s:t.list
             let strs = []
             for val in a:expr
                 call add(strs, s:Json(val))
             endfor
             return '[' . join(strs, ',') . ']'
-        elseif texpr ==# v:t_dict
+        elseif texpr ==# s:t.dict
             let strs = []
             for [k, v] in items(a:expr)
                 call add(strs, '"' . k . '":' . s:Json(v))
+                unlet v
             endfor
             return '{' . join(strs, ',') . '}'
         else
@@ -52,12 +54,13 @@ function! VimrcTestSubjectCapture(capname)
        \})
     endfor
 
-    call writefile(split(execute('messages'), "\n"), capdir . '/messages', 's')
-    call writefile([s:Json(wincemodel)],             capdir . '/wince', 's')
-
-    " Clear the message history so that it won't accumulate
-    " in later captures
-    messages clear
+    " Can't use execute() in Vim <=8.0
+    let messgs = ''
+    redir => messgs
+        messages
+    redir END
+    call writefile(split(messgs, "\n"),  capdir . '/messages', 's')
+    call writefile([s:Json(wincemodel)], capdir . '/wince',    's')
 
     " Write 'captured subject' to the bottom line, to avoid flaky presence of
     " 'call VimrcTestSubjectCapture('...') text
@@ -65,7 +68,9 @@ function! VimrcTestSubjectCapture(capname)
 
     " Write one character to the signal file, unblocking the testbed so it can
     " dump the terminal in which the subject is running
-    call writefile(['v'], s:dir . '/signal', 'as')
+    " Append Mode for writefile() isn't supported in older versions of Vim,
+    " so use a shell
+    silent call system('echo v >> ' . s:dir . '/signal')
 endfunction
 
 " Use conceallevel 3 in Undotree windows to hide timestamps
@@ -94,7 +99,7 @@ for regname in [
 \   'u', 'v', 'x', 'w', 'y',
 \   'z', '0', '1', '2', '3',
 \   '4', '5', '6', '7', '8',
-\   '9', '"', '-', '#', '/'
+\   '9', '"', '-', '/'
 \]
     call setreg(regname, '')
 endfor
