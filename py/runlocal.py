@@ -103,7 +103,7 @@ else:
 
 def runversion(v):
     if v in exclude:
-        return '[%s][SKIP] Unsupported\n' %  v
+        return '[%s][skip] Unsupported\n' %  v
     cmd = '/home/jeremy/Projects/vimrc-test/sh/run.sh %s /home/jeremy/vim' % v
     return subprocess.run(cmd, capture_output=True, text=True, shell=True).stdout
 

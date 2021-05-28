@@ -50,7 +50,7 @@ function! s:ResultByLabel(label, exphash)
     if a:exphash !=# acthash
         return '[!!!!] ' . a:label . ': Traces don''t match, but no error log'
     endif
-    return '[PASS] ' . a:label
+    return '[pass] ' . a:label
 endfunction
 
 let s:report_bufnr = bufnr(g:vimrc_test_sessionname . '/report', 1)
