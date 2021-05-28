@@ -25,12 +25,18 @@ endfunction
 
 let s:term_subs = []
 " Cursor positions are flaky, so disregard them
-call add(s:term_subs, [ '^>', '|' ])
-call add(s:term_subs, [ '\(|\)\@!>', '|' ])
+call add(s:term_subs, ['^>', '|'])
+call add(s:term_subs, ['\([^|]\)>', '\1|'])
 " Fully expand every instance of |@{count}, as sometimes Vim partially expands
 " them before writing to the file
-call add(s:term_subs, [ '|\([^@|]\+\)@\(\d\+\)', '\=repeat("|" . submatch(1), submatch(2))' ])
-call add(s:term_subs, [ '|\(.\)+\([^@|]*\)|\(.\)\([|$]\)', '|\1+\2|\3+\2\4' ])
+call add(s:term_subs, ['|\([^@|]\+\)@\(\d\+\)', '\=repeat("|" . submatch(1), submatch(2) + 1)'])
+
+" Remove any of the terminal's responses to t_RV
+call add(s:term_subs, ['|^|[|[|>\(|\(\d\|;\)\)\+|c', '\=repeat("| ", len(split(submatch(0), "|")))'])
+
+" Apply text properties to every character, as sometimes Vim shortcuts them in
+" different ways
+call add(s:term_subs, ['|\(.\)+\([^@|]*\)|\(.\)\([|$]\)', '|\1+\2|\3+\2\4'])
 
 function! s:WaitForSignal(unchangedsignalcount)
     let termnr = g:vimrc_test_subject.termnr
@@ -39,12 +45,18 @@ function! s:WaitForSignal(unchangedsignalcount)
         if term_getstatus(termnr) !~# 'running'
             throw 'Subject crashed'
         endif
-        if term_getline(termnr, row) ==#
-       \   'Press ENTER or type command to continue'
+        let theline = term_getline(termnr, row)
+        if theline =~#
+       \   '\(Press\|Hit\) ENTER or type command to continue'
             call term_dumpwrite(termnr, g:vimrc_test_subject.dir . '/stall')
             throw 'Subject stalled'
         endif
+        if theline =~# 'Not an editor command'
+            call term_dumpwrite(termnr, g:vimrc_test_subject.dir . '/stall')
+            throw 'Command unknown to subject'
+        endif
 
+        call writefile(['LINE ' . theline], g:vimrc_test_subject.dir . '/channel', 'as')
         sleep 50m
     endwhile
 endfunction
@@ -86,8 +98,9 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
    \)
     call term_sendkeys(termnr, a:sessiondir . ' ')
 
-    " Toggle off/on the 'number' option to avoid that weird bug in older Vims
-    call term_sendkeys(termnr, ":set nonu\<cr>:set nu\<cr>:echo 'fresh subject'\<cr>")
+    " Toggle off/on the 'number' option to avoid a weird bug in older Vims -
+    " some range between 8.0.500ish to 8.2.1500ish
+    call term_sendkeys(termnr, ":set nonu\<cr>:set nu\<cr>")
 
     " Testbed will be ready once thge signal arrives
     let g:vimrc_test_subject.termnr = termnr
@@ -99,6 +112,12 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     " Wait for the subject to write to the signal file, indicating it's up and
     " running
     call s:WaitForSignal(-1)
+
+    " For some reason, the initial call to IndicateActiveWindowNoCmdWin
+    " doesn't work in Vims older than 7.3.1115. So force an extra call after
+    " the signal arrives
+    call term_sendkeys(termnr, ":call IndicateActiveWindowNoCmdWin()\<cr>")
+    call term_sendkeys(termnr, ":echo 'fresh subject'\<cr>")
 endfunction
 
 " Perform a capture
@@ -120,9 +139,9 @@ function! VimrcTestBedCapture()
     call writefile([g:vimrc_test_subject.trace], capdir . '/trace', 's')
 
     " VimrcTestSubjectCapture is part of subject.vim. It causes the Subject
-    " Vim instance to write the Jersuite log buffer, message history, and
-    " Wince model to files in the capture directory. Once done, it writes one
-    " character to the signal file
+    " Vim instance to write the message history and Wince model to files in
+    " the capture directory. Once done, it writes one character to the signal
+    " file
     let unchangedsignalcount = g:vimrc_test_subject.signalcount
     call term_sendkeys(
    \    g:vimrc_test_subject.termnr,

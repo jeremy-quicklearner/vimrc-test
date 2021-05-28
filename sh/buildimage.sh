@@ -2,25 +2,28 @@
 set -e
 shopt -s expand_aliases
 
-ETCDIR="/etc/vimrc-test"
-BUILDDIR="$ETCDIR/vimbuild"
-DOCKERFILEDIR=$(dirname $(dirname $(readlink -f $0)))/docker
 SHELLDIR=$(dirname $(readlink -f $0))
+source $SHELLDIR/config.sh
 
-mkdir -p $ETCDIR
+DOCKERFILEDIR=$(dirname $(dirname $(readlink -f $0)))/docker
+
 mkdir -p $BUILDDIR
-
-if ! [ -e "$BUILDDIR/.dockerignore" ]; then
-    echo "failed-*" > $BUILDDIR/.dockerignore
-fi
+mkdir -p $FAILDIR
 
 if ! [ -n "$1" ]; then
     echo "Must supply valid Vim tag or branch to build"
     exit 1
 fi
 
-if ! [ -d "$ETCDIR/vim-src" ] ; then
-    git clone https://github.com/vim/vim $ETCDIR/vim-src
+touch $LOCKFILE
+exec {FD}<>$LOCKFILE
+
+echo Acquiring Build Lock
+flock -x $FD
+echo Build Lock acquired
+
+if ! [ -d "$SRCDIR" ] ; then
+    git clone https://github.com/vim/vim $SRCDIR
 fi
 
 if [[ "$(docker images -q vimrc-test/build 2> /dev/null)" == "" ]]; then
@@ -35,7 +38,7 @@ fi
 alias buildrun='docker run \
 --user $(id -u):$(id -g) \
 --mount type=bind,source=$SHELLDIR,target=/etc/vimrc-test/sh \
---mount type=bind,source=$ETCDIR/vim-src,target=/etc/vimrc-test/vim-src \
+--mount type=bind,source=$SRCDIR,target=/etc/vimrc-test/vim-src \
 --mount type=bind,source=$BUILDDIR/testbed,target=/usr/local/vim-testbed \
 --mount type=bind,source=$BUILDDIR/$1,target=/usr/local/vim-subject \
 -i -t --rm \

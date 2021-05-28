@@ -11,7 +11,7 @@ if ! [ -e "/usr/local/vim-testbed/bin/vim" ]; then
     exit 1
 fi
 
-if ! [ -e "/root/vim/setup" ]; then
+if ! [ -e "/etc/vimrc-test/vimrc/setup" ]; then
     echo "Vimrc not present"
     exit 1
 fi
@@ -26,9 +26,11 @@ if ! [ -e "/etc/vimrc-test/session" ]; then
     exit 1
 fi
 
-/root/vim/setup
+HOME=/etc/vimrc-test/home
 
-if ! [ -e /root/vim/setup ]; then
+/etc/vimrc-test/vimrc/setup
+
+if ! [ -e ~/.vimrc ]; then
     echo "Vimrc setup failed"
     exit 1
 fi

@@ -70,7 +70,7 @@ function! VimrcTestSubjectCapture(capname)
     " dump the terminal in which the subject is running
     " Append Mode for writefile() isn't supported in older versions of Vim,
     " so use a shell
-    silent call system('echo v >> ' . s:dir . '/signal')
+    silent let output = system('stdbuf -oL echo v >> ' . s:dir . '/signal')
 endfunction
 
 " Use conceallevel 3 in Undotree windows to hide timestamps
@@ -79,6 +79,9 @@ autocmd FileType undotree set conceallevel=3
 " Use the jeremy-test colour scheme
 colorscheme jeremy-test
 
+" Don't save a viminfo file
+set viminfo=
+
 " Get the signal file name from the user
 let s:dir = ''
 let nextch = nr2char(getchar())
@@ -86,6 +89,9 @@ while nextch != ' '
     let s:dir .= nextch
     let nextch = nr2char(getchar())
 endwhile
+
+" Put swap files in the session directory
+let &directory = s:dir
 
 " Don't show [Vim X.X] in the tabline
 let g:override_vim_version_string = 1
@@ -106,7 +112,12 @@ endfor
 
 " Force-run post-event callbacks here to avoid race conditions with the
 " testbed. Also redraw
-call jer_pec#Run()
+try
+    call jer_pec#Run()
+catch /.*/
+    echom 'Failed to run post-event callbacks on start: ' . v:exception
+    exit
+endtry
 redraw
 
 call writefile(['v'], s:dir . '/signal', 'as')

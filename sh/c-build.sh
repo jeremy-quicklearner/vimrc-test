@@ -23,7 +23,7 @@ chown $(id -u):$(id -g) /usr/local/vim-subject
 cd /etc/vimrc-test/vim-src
 
 # In case the last build changed source-controlled files
-make distclean
+make distclean || RETVAL=$?
 git reset --hard
 git clean -fd
 
@@ -31,7 +31,7 @@ git fetch --all --tags
 
 git checkout $1
 
-make distclean
+make distclean || RETVAL=$?
 git reset --hard
 git clean -fd
 

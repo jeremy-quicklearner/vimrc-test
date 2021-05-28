@@ -4,7 +4,7 @@ FROM ubuntu
 VOLUME /etc/vimrc-test/vim-exec
 
 # Access to vimrc
-VOLUME /root/vim
+VOLUME /etc/vimvimrc-test/vimrc
 
 # Access to expected values
 VOLUME /etc/vimrc-test/expect
@@ -16,8 +16,11 @@ VOLUME /etc/vimrc-test/session
 COPY testbed /usr/local/vim-testbed
 
 # Indicate that this is a testbed container
+# Create a home directory
 # Git needed by vim-plug
-RUN mkdir /etc/vimrc-test-istest && \
+RUN mkdir -p /etc/vimrc-test/home && \
+    chmod 777 /etc/vimrc-test/home && \
+    mkdir /etc/vimrc-test-istest && \
     apt-get -y update && \
     apt-get -y install git && \
     rm -rf /var/lib/apt/lists/*
