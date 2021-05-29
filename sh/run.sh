@@ -8,7 +8,7 @@ EXPECTDIR=$(dirname $(dirname $(readlink -f $0)))/expect
 THISSESSIONDIR="$SESSIONDIR/$1"
 
 if [ -e "$FAILDIR/$1" ]; then
-    echo "[$1][SKIP] Failed to compile on a prior attempt"
+    echo "[$1][skip] Failed to compile on a prior attempt"
     exit 0
 fi
 
@@ -18,7 +18,7 @@ fi
 
 if [[ "$(docker images -q vimrc-test/env-$1 2> /dev/null)" == "" ]]; then
     touch $FAILDIR/$1
-    echo "[$1][SKIP] Failed to compile"
+    echo "[$1][skip] Failed to compile"
     exit 0
 fi
 
