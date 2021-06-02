@@ -111,9 +111,9 @@ function! s:Escape()
         call writefile([
        \    'let ' . labeldict . '.' .
        \    label .
-       \    ' = "' .
+       \    ' = {"tracehash":"' .
        \    finalhash .
-       \    '"'
+       \    '"}'
        \], s:labelpath, 'a')
         exit
     elseif choice ==# 4

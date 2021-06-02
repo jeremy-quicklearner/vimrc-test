@@ -36,14 +36,18 @@ else
     endfunction
 endif
 
+" Extra step before a capture. See testbed.vim
+function! VimrcTestSubjectPreCapture()
+    call jer_pec#Run()
+    redraw
+
+    silent call writefile(['v'], s:dir . '/signal', 's')
+    echo 'ready for capture'
+endfunction
+
 function! VimrcTestSubjectCapture(capname)
     " Use the directory created by the testbed
     let capdir = s:dir . '/' . a:capname
-
-    " Force-run post-event callbacks here to avoid race conditions with the
-    " testbed. Also redraw
-    call jer_pec#Run()
-    redraw
 
     let wincemodel = []
     for tabnr in range(1, tabpagenr('$'))
@@ -66,11 +70,9 @@ function! VimrcTestSubjectCapture(capname)
     " 'call VimrcTestSubjectCapture('...') text
     echo 'captured subject'
 
-    " Write one character to the signal file, unblocking the testbed so it can
+    " Write one character to the signal pipe, unblocking the testbed so it can
     " dump the terminal in which the subject is running
-    " Append Mode for writefile() isn't supported in older versions of Vim,
-    " so use a shell
-    silent let output = system('stdbuf -oL echo v >> ' . s:dir . '/signal')
+    silent call writefile(['v'], s:dir . '/signal', 's')
 endfunction
 
 " Use conceallevel 3 in Undotree windows to hide timestamps
@@ -82,7 +84,7 @@ colorscheme jeremy-test
 " Don't save a viminfo file
 set viminfo=
 
-" Get the signal file name from the user
+" Get the signal pipe name from the user
 let s:dir = ''
 let nextch = nr2char(getchar())
 while nextch != ' '
@@ -120,4 +122,4 @@ catch /.*/
 endtry
 redraw
 
-call writefile(['v'], s:dir . '/signal', 'as')
+silent call writefile(['v'], s:dir . '/signal', 's')

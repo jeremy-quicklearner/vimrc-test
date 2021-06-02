@@ -15,8 +15,48 @@ call mkdir(g:vimrc_test_sessionname, 'p')
 call system('rm -rf ' . g:vimrc_test_sessionname . '/*')
 
 " vimrc_test_label_tp comes from label.vim
-for [label, tracehash] in items(g:vimrc_test_label_tp)
-    let trace = readfile(g:vimrc_test_expectpath . '/' . tracehash . '/trace')[0]
+for [label, testpoint] in items(g:vimrc_test_label_tp)
+    if has_key(testpoint, 'has')
+        let found = 0
+        for requirement in testpoint.has
+            if system(
+           \    g:vimrc_test_subjectpath .
+           \    ' -e -s -c "if has(''' . 
+           \    requirement .
+           \    ''') | cquit | else | exit | endif" > /dev/null 2>&1 ; echo -n $?'
+           \) ==# 0
+                call mkdir(g:vimrc_test_sessionname . '/' . label, 'p')
+                call writefile([requirement], g:vimrc_test_sessionname . '/' . label . '/req', 's')
+                found = 1
+                break
+            endif
+        endfor
+        if found
+            continue
+        endif
+    endif
+
+    if has_key(testpoint, 'exists')
+        let found = 0
+        for requirement in testpoint.exists
+            if system(
+           \    g:vimrc_test_subjectpath .
+           \    ' -e -s -c "if has(''' . 
+           \    requirement .
+           \    ''') | cquit | else | exit | endif" > /dev/null 2>&1 ; echo -n $?'
+           \) ==# 0
+                call mkdir(g:vimrc_test_sessionname . '/' . label, 'p')
+                call writefile([requirement], g:vimrc_test_sessionname . '/' . label . '/req', 's')
+                found = 1
+                break
+            endif
+        endfor
+        if found
+            continue
+        endif
+    endif
+
+    let trace = readfile(g:vimrc_test_expectpath . '/' . testpoint.tracehash . '/trace')[0]
     " This function comes from testbed.vim
     call VimrcTestBedExecuteTrace(
    \    g:vimrc_test_subjectpath,
@@ -28,6 +68,10 @@ endfor
 
 function! s:ResultByLabel(label, exphash)
     let dir = g:vimrc_test_sessionname . '/' . a:label
+    if filereadable(dir . '/req')
+        return '[skip] ' . a:label . ': subject is missing requirement ' . readfile(dir . '/req')[-1]
+    endif
+
     let haserr = filereadable(dir . '/err')
     let haslast = filereadable(dir . '/last')
 
@@ -56,11 +100,11 @@ endfunction
 let s:report_bufnr = bufnr(g:vimrc_test_sessionname . '/report', 1)
 silent execute 'sbuffer ' . g:vimrc_test_sessionname . '/report'
 call setbufvar(s:report_bufnr, '&swapfile', 0)
-for [label, exphash] in items(g:vimrc_test_label_tp)
+for [label, testpoint] in items(g:vimrc_test_label_tp)
     call setbufline(
    \    s:report_bufnr,
    \    line('$') + 1,
-   \    [s:ResultByLabel(label, exphash)]
+   \    [s:ResultByLabel(label, testpoint.tracehash)]
    \)
 endfor
 call setbufline(s:report_bufnr, 1, 'vimrc Test Report: ' . g:vimrc_test_sessionname)

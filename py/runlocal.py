@@ -33,36 +33,40 @@ idx = nonweirdversions.index('7.4')
 versions = nonweirdversions[:idx] + weirdversions + nonweirdversions[idx:]
 versions = ['v' + v for v in versions]
 
-# Only support 7.3.1058+, since that is the first version in which funcrefs
-# can be called in scripts other than the ones in which they are defined
-idx = versions.index('v7.3.1058')
-versions = versions[idx:]
-
 # Exclude unsupported versions with breaking bugs
-exclude = []
+exclude = set([])
 
 # Vimscript bugs
-exclude.append('v8.2.2250')
+exclude.add('v8.2.2250')
 
 # Top tilde under buffer text is missing in these versions
 for p in range(936, 1165):
-    exclude.append('v8.2.%s' % '{:04d}'.format(p))
+    exclude.add('v8.2.%s' % '{:04d}'.format(p))
+
+# Issues with redrawing that cause a race condition between subject and testbed
+for p in range(1587, 1910):
+    exclude.add('v8.1.%s' % p)
 
 # Colours are different
 for p in range(791, 829):
-    exclude.append('v8.0.%s' % '{:04d}'.format(p))
+    exclude.add('v8.0.%s' % '{:04d}'.format(p))
 
 # Issues calling autoloaded funcrefs
 for p in range(2137, 2142):
-    exclude.append('v7.4.%s' % '{:04d}'.format(p))
+    exclude.add('v7.4.%s' % '{:04d}'.format(p))
 
 # Issues with funcrefs
 for p in range(1577, 1581):
-    exclude.append('v7.4.%s' % '{:04d}'.format(p))
+    exclude.add('v7.4.%s' % '{:04d}'.format(p))
 
 # Issues with typing
 for p in range(1155, 1163):
-    exclude.append('v7.4.%s' % '{:04d}'.format(p))
+    exclude.add('v7.4.%s' % '{:04d}'.format(p))
+
+# Require at least 7.3.1115 - first version in which number and relativenumber
+# options play well together
+for p in range(1115):
+    exclude.add('v7.3.%s' % '{:03d}'.format(p))
 
 # Course select
 course = os.environ['COURSE']

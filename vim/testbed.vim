@@ -74,23 +74,24 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     call mkdir(a:sessiondir, 'p')
     silent call system('rm -rf ' . a:sessiondir . '/*')
 
+    " Create a new named pipe - the Signal Pipe
+    let signalpipe = a:sessiondir . '/signal'
+    silent call system('mkfifo ' . signalpipe)
+    "call writefile([], signalpipe, 's')
+
     " Need three extra rows for the Testbed Vim instance - tabline, statusline,
     " and ex command line
     let &lines=str2nr(a:rows) + 3
     let &columns=str2nr(a:cols)
 
-    " Create a new file - the Signal File
-    let signalfile = a:sessiondir . '/signal'
-    call writefile([], signalfile, 's')
-
-    " Tail the signal file using a channel. The channel will get a message
-    " when anything is written to the file
-    let job = job_start('tail -f ' . signalfile)
+    " Tail the signal pipe using a channel. The channel will get a message
+    " when anything is written to the pipe
+    let job = job_start('tail -f ' . signalpipe)
     let channel = job_getchannel(job)
     call ch_setoptions(channel, {'mode':'nl','callback':function('s:OnSignal')})
 
     " Start the Subject Vim instance in a terminal window. Make it source
-    " subject.vim on startup and tell it the name of the signal file
+    " subject.vim on startup and tell it the name of the signal pipe
     enew!
     let termnr = term_start(
    \    [a:subjectpath, '-S', s:subjectscript],
@@ -102,14 +103,14 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     " some range between 8.0.500ish to 8.2.1500ish
     call term_sendkeys(termnr, ":set nonu\<cr>:set nu\<cr>")
 
-    " Testbed will be ready once thge signal arrives
+    " Testbed will be ready once the signal arrives
     let g:vimrc_test_subject.termnr = termnr
     let g:vimrc_test_subject.dir = a:sessiondir
     let g:vimrc_test_subject.job = job
     let g:vimrc_test_subject.channel = channel
     let g:vimrc_test_subject.trace = '$$START' . a:rows . ',' . a:cols . '$$'
 
-    " Wait for the subject to write to the signal file, indicating it's up and
+    " Wait for the subject to write to the signal pipe, indicating it's up and
     " running
     call s:WaitForSignal(-1)
 
@@ -138,10 +139,21 @@ function! VimrcTestBedCapture()
     " Write the trace
     call writefile([g:vimrc_test_subject.trace], capdir . '/trace', 's')
 
+    " VimrcTestSubjectPreCapture forces post-event callbacks to run, and then
+    " writes to the signal pipe. The capture needs to involve two separate
+    " events inside the subject, so that the subject may return to its event
+    " loop after redrawing
+    let unchangedsignalcount = g:vimrc_test_subject.signalcount
+    call term_sendkeys(
+   \    g:vimrc_test_subject.termnr,
+   \    ":call VimrcTestSubjectPreCapture()\n"
+   \)
+    call s:WaitForSignal(unchangedsignalcount)
+
     " VimrcTestSubjectCapture is part of subject.vim. It causes the Subject
     " Vim instance to write the message history and Wince model to files in
     " the capture directory. Once done, it writes one character to the signal
-    " file
+    " pipe
     let unchangedsignalcount = g:vimrc_test_subject.signalcount
     call term_sendkeys(
    \    g:vimrc_test_subject.termnr,
@@ -149,11 +161,11 @@ function! VimrcTestBedCapture()
    \)
 
     " Wait for that character to appear in the channel from tailing the signal
-    " file, and for any terminal updates. This avoids dumping the terminal
+    " pipe, and for any terminal updates. This avoids dumping the terminal
     " before the Subject is ready
     call s:WaitForSignal(unchangedsignalcount)
 
-    call term_wait(g:vimrc_test_subject.termnr)
+    call term_wait(g:vimrc_test_subject.termnr, 200)
 
     " Dump the terminal
     try
