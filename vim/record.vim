@@ -19,12 +19,16 @@ function! s:Start(startfrom, rows, cols)
         call VimrcTestBedStart(v:progpath, g:vimrc_test_sessionname, a:rows, a:cols)
     else
         if has_key(g:vimrc_test_label, a:startfrom)
-            let tracehash = g:vimrc_test_label[a:startfrom].tracehash
+            let sfdict = g:vimrc_test_label[a:startfrom]
         elseif has_key(g:vimrc_test_label_tp, a:startfrom)
-            let tracehash = g:vimrc_test_label_tp[a:startfrom].tracehash
+            let sfdict = g:vimrc_test_label_tp[a:startfrom]
         else
             throw 'Cannot start recording from nonexistent label ' . a:startfrom
         endif
+        let tracehash = sfdict.tracehash
+
+        let s:reqhas = get(sfdict, 'has', 0)
+        let s:reqexists = get(sfdict, 'exists', 0)
 
         let trace = readfile(g:vimrc_test_expectpath . '/' . tracehash . '/trace')[0]
         call VimrcTestBedExecuteTrace(v:progpath, g:vimrc_test_sessionname, trace, 0)
@@ -109,13 +113,21 @@ function! s:Escape()
         else
             let labeldict = 'g:vimrc_test_label'
         endif
-        call writefile([
-       \    'let ' . labeldict . '.' .
-       \    label .
-       \    ' = {"tracehash":"' .
-       \    finalhash .
-       \    '"}'
-       \], s:labelpath, 'a')
+
+        let labelline = 'let ' . labeldict . '.' . label .' = {"tracehash":"' .
+       \    finalhash . '"'
+
+        if type(s:reqhas) ==# v:t_list
+            let labelline .= ',"has":' . string(s:reqhas)
+        endif
+
+        if type(s:reqexists) ==# v:t_list
+            let labelline .= ',"exists":' . string(s:reqexists)
+        endif
+
+        let labelline .= '}'
+
+        call writefile([labelline], s:labelpath, 'a')
         exit
     elseif choice ==# 4
         let rows = input("\nRows? (current: " . string(&lines - 3) . ') ')
