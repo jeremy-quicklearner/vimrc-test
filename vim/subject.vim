@@ -41,7 +41,7 @@ function! VimrcTestSubjectPreCapture()
     call jer_pec#Run()
     redraw
 
-    silent call writefile(['v'], s:dir . '/signal', 's')
+    call writefile(['v'], s:dir . '/signal', 's')
     echo 'ready for capture'
 endfunction
 
@@ -72,7 +72,7 @@ function! VimrcTestSubjectCapture(capname)
 
     " Write one character to the signal pipe, unblocking the testbed so it can
     " dump the terminal in which the subject is running
-    silent call writefile(['v'], s:dir . '/signal', 's')
+    call writefile(['v'], s:dir . '/signal', 's')
 endfunction
 
 " Use conceallevel 3 in Undotree windows to hide timestamps
@@ -83,6 +83,14 @@ colorscheme jeremy-test
 
 " Don't save a viminfo file
 set viminfo=
+
+" For some reason, setting this value avoids flaky behaviour in older versions
+" where Vim ignores keystrokes from the testbed
+set updatecount=0
+
+" Always use CursorHold for post-event callbacks. SafeState is racy when
+" keystrokes come in as quickly as they do with the testbed
+let g:jersuite_forcecursorholdforpostevent = 1
 
 " Get the signal pipe name from the user
 let s:dir = ''
@@ -97,6 +105,11 @@ let &directory = s:dir
 
 " Don't show [Vim X.X] in the tabline
 let g:override_vim_version_string = 1
+
+" For some reason, invoking :sleep from OnSafeState in jer_pec.vim causes Vim
+" to ignore keystrokes from the testbed. With this setting, :sleep is not
+" invoked there.
+let g:jersuite_safestate_timeout = 0
 
 " Empty all the registers
 for regname in [
@@ -122,4 +135,4 @@ catch /.*/
 endtry
 redraw
 
-silent call writefile(['v'], s:dir . '/signal', 's')
+call writefile(['v'], s:dir . '/signal', 's')

@@ -44,7 +44,7 @@ for p in range(936, 1165):
     exclude.add('v8.2.%s' % '{:04d}'.format(p))
 
 # Issues with redrawing that cause a race condition between subject and testbed
-for p in range(1587, 1910):
+for p in range(1587, 1909):
     exclude.add('v8.1.%s' % p)
 
 # Colours are different
@@ -77,7 +77,7 @@ elif course == 'ALL000':
 elif course == 'ALL00':
     versions = [v for v in versions if re.match(r'^.*00$', v)]
 elif course == 'ALL0':
-    versions = [v for v in versions if re.match(r'^.*0$', v)]
+    versions = [v for v in versions if re.match(r'^.*2$', v)]
 elif course.startswith('MINMAX'):
     nversions = []
     min = os.environ['COURSE_MIN']
@@ -107,7 +107,7 @@ else:
 
 def runversion(v):
     if v in exclude:
-        return '[%s][skip] Unsupported\n' %  v
+        return '[%s][skip][Unsupported]\n' %  v
     cmd = '/home/jeremy/Projects/vimrc-test/sh/run.sh %s /home/jeremy/vim' % v
     return subprocess.run(cmd, capture_output=True, text=True, shell=True).stdout
 

@@ -25,13 +25,13 @@ for [label, testpoint] in items(g:vimrc_test_label_tp)
            \    requirement .
            \    ''') | cquit | else | exit | endif" > /dev/null 2>&1 ; echo -n $?'
            \) ==# 0
-                call mkdir(g:vimrc_test_sessionname . '/' . label, 'p')
-                call writefile([requirement], g:vimrc_test_sessionname . '/' . label . '/req', 's')
-                found = 1
+                let found = 1
                 break
             endif
         endfor
         if found
+            call mkdir(g:vimrc_test_sessionname . '/' . label, 'p')
+            call writefile([requirement], g:vimrc_test_sessionname . '/' . label . '/req', 's')
             continue
         endif
     endif
@@ -45,25 +45,35 @@ for [label, testpoint] in items(g:vimrc_test_label_tp)
            \    requirement .
            \    ''') | cquit | else | exit | endif" > /dev/null 2>&1 ; echo -n $?'
            \) ==# 0
-                call mkdir(g:vimrc_test_sessionname . '/' . label, 'p')
-                call writefile([requirement], g:vimrc_test_sessionname . '/' . label . '/req', 's')
-                found = 1
+                let found = 1
                 break
             endif
         endfor
         if found
+            call mkdir(g:vimrc_test_sessionname . '/' . label, 'p')
+            call writefile([requirement], g:vimrc_test_sessionname . '/' . label . '/req', 's')
             continue
         endif
     endif
 
     let trace = readfile(g:vimrc_test_expectpath . '/' . testpoint.tracehash . '/trace')[0]
-    " This function comes from testbed.vim
-    call VimrcTestBedExecuteTrace(
-   \    g:vimrc_test_subjectpath,
-   \    g:vimrc_test_sessionname . '/' . label,
-   \    trace,
-   \    1
-   \)
+
+    for i in range(5)
+        " This function comes from testbed.vim
+        call VimrcTestBedExecuteTrace(
+       \    g:vimrc_test_subjectpath,
+       \    g:vimrc_test_sessionname . '/' . label,
+       \    trace,
+       \    1
+       \)
+        if !filereadable(g:vimrc_test_sessionname . '/' . label . '/err') ||
+       \   index([
+       \       'Signal timeout',
+       \       'Subject stalled'
+       \   ], readfile(g:vimrc_test_sessionname . '/' . label . '/err')[-1]) ==# -1
+            break
+        endif
+    endfor
 endfor
 
 function! s:ResultByLabel(label, exphash)
@@ -78,7 +88,7 @@ function! s:ResultByLabel(label, exphash)
     if haslast
         let acthash = readfile(dir . '/last')[0]
         let ls = globpath(dir, '*', 0, 1)
-        let re = '(' . join([acthash, 'last', 'stall', 'err'], ')|(') . ')'
+        let re = '(' . join([acthash, 'last', 'time', 'keylog', 'stall', 'err'], ')|(') . ')'
         call filter(ls, 're !~# fnamemodify(v:val, ":t")')
         call filter(ls, 'delete(v:val, "rf")')
     endif
@@ -94,7 +104,7 @@ function! s:ResultByLabel(label, exphash)
     if a:exphash !=# acthash
         return '[!!!!] ' . a:label . ': Traces don''t match, but no error log'
     endif
-    return '[pass] ' . a:label
+    return '[pass][' . readfile(dir . '/time')[0] . 's] '. a:label
 endfunction
 
 let s:report_bufnr = bufnr(g:vimrc_test_sessionname . '/report', 1)

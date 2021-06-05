@@ -41,7 +41,13 @@ call add(s:term_subs, ['|\(.\)+\([^@|]*\)|\(.\)\([|$]\)', '|\1+\2|\3+\2\4'])
 function! s:WaitForSignal(unchangedsignalcount)
     let termnr = g:vimrc_test_subject.termnr
     let row = term_getsize(termnr)[0]
+    let waitcount = 0
     while g:vimrc_test_subject.signalcount ==# a:unchangedsignalcount
+        " One minute
+        if waitcount >=# 1200
+            throw 'Signal timeout'
+        endif
+        let waitcount += 1
         if term_getstatus(termnr) !~# 'running'
             throw 'Subject crashed'
         endif
@@ -94,7 +100,7 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     " subject.vim on startup and tell it the name of the signal pipe
     enew!
     let termnr = term_start(
-   \    [a:subjectpath, '-S', s:subjectscript],
+   \    [a:subjectpath, '-w', a:sessiondir . '/keylog', '-S', s:subjectscript],
    \    {'curwin':1}
    \)
     call term_sendkeys(termnr, a:sessiondir . ' ')
@@ -114,10 +120,6 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     " running
     call s:WaitForSignal(-1)
 
-    " For some reason, the initial call to IndicateActiveWindowNoCmdWin
-    " doesn't work in Vims older than 7.3.1115. So force an extra call after
-    " the signal arrives
-    call term_sendkeys(termnr, ":call IndicateActiveWindowNoCmdWin()\<cr>")
     call term_sendkeys(termnr, ":echo 'fresh subject'\<cr>")
 endfunction
 
@@ -286,6 +288,7 @@ endfunction
 
 function! VimrcTestBedExecuteTrace(subjectpath, sessiondir, trace, finish)
     let remainingtrace = a:trace
+    let starttime = localtime()
     try
         while !empty(remainingtrace)
             " Consume item
@@ -306,6 +309,7 @@ function! VimrcTestBedExecuteTrace(subjectpath, sessiondir, trace, finish)
                 call s:Feedkeys(keys)
             elseif item =~# '^START'
                 let [rows, cols] = split(item[5:], ',')
+
                 call VimrcTestBedStart(a:subjectpath, a:sessiondir, rows, cols)
             elseif item =~# '^SIZE'
                 let [rows, cols] = split(item[4:], ',')
@@ -322,6 +326,7 @@ function! VimrcTestBedExecuteTrace(subjectpath, sessiondir, trace, finish)
     finally
         if a:finish && g:vimrc_test_subject.signalcount !=# -1
             call writefile([sha256(g:vimrc_test_subject.trace)], a:sessiondir . '/last', 's')
+            call writefile([localtime() - starttime], a:sessiondir . '/time', 's')
             call VimrcTestBedStop()
         endif
     endtry

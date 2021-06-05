@@ -19,9 +19,9 @@ function! s:Start(startfrom, rows, cols)
         call VimrcTestBedStart(v:progpath, g:vimrc_test_sessionname, a:rows, a:cols)
     else
         if has_key(g:vimrc_test_label, a:startfrom)
-            let tracehash = g:vimrc_test_label[a:startfrom]
+            let tracehash = g:vimrc_test_label[a:startfrom].tracehash
         elseif has_key(g:vimrc_test_label_tp, a:startfrom)
-            let tracehash = g:vimrc_test_label_tp[a:startfrom]
+            let tracehash = g:vimrc_test_label_tp[a:startfrom].tracehash
         else
             throw 'Cannot start recording from nonexistent label ' . a:startfrom
         endif
@@ -94,6 +94,7 @@ function! s:Escape()
             exit
         endif
         call delete(dir . '/last')
+        call delete(dir . '/keylog')
         call mkdir(g:vimrc_test_expectpath, 'p')
         call system('cp -rv ' . dir . '/* ' . g:vimrc_test_expectpath .. '/')
         call system('rm -r ' . dir)
