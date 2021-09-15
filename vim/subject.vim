@@ -39,10 +39,12 @@ endif
 " Extra step before a capture. See testbed.vim
 function! VimrcTestSubjectPreCapture()
     call jer_pec#Run()
+    if exists('#CosmeticDeps')
+        call RemoveCosDepGroup()
+    endif
     redraw
 
     call writefile(['v'], s:dir . '/signal', 's')
-    "echo 'ready for capture'
 endfunction
 
 function! VimrcTestSubjectCapture(capname)
