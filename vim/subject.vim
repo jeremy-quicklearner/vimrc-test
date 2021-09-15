@@ -42,7 +42,7 @@ function! VimrcTestSubjectPreCapture()
     redraw
 
     call writefile(['v'], s:dir . '/signal', 's')
-    echo 'ready for capture'
+    "echo 'ready for capture'
 endfunction
 
 function! VimrcTestSubjectCapture(capname)
@@ -72,8 +72,16 @@ function! VimrcTestSubjectCapture(capname)
 
     " Write one character to the signal pipe, unblocking the testbed so it can
     " dump the terminal in which the subject is running
+    "call writefile(['v'], s:dir . '/signal', 's')
+endfunction
+
+function! VimrcTestSubjectIndirectReceive()
+    let keyslist = readfile(s:dir . "/keybuf")
+    let keysstr = join(keyslist, "\<cr>")
+    call feedkeys(keysstr, 'mt')
     call writefile(['v'], s:dir . '/signal', 's')
 endfunction
+noremap $ :call VimrcTestSubjectIndirectReceive()<cr>
 
 " Use conceallevel 3 in Undotree windows to hide timestamps
 autocmd FileType undotree set conceallevel=3
@@ -83,10 +91,20 @@ colorscheme jeremy-test
 
 " Don't save a viminfo file
 set viminfo=
+set noswapfile
 
 " For some reason, setting this value avoids flaky behaviour in older versions
 " where Vim ignores keystrokes from the testbed
 set updatecount=0
+
+set updatetime=99999999
+
+set notimeout
+set nottimeout
+
+augroup JersuitePEC
+    autocmd!
+augroup END
 
 " Always use CursorHold for post-event callbacks. SafeState is racy when
 " keystrokes come in as quickly as they do with the testbed

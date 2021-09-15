@@ -8,12 +8,12 @@
 # MINMAX - Test versions between a minimum and a maximum (inclusive)
 # MINMAX0 - Test versions ending in 0 between a minimum and a maximum (inclusive)
 # MINMAX00 - Test versions ending in 00 between a minimum and a maximum (inclusive)
-export COURSE=ALL0
-export COURSE_MIN=v8.1.1600
-export COURSE_MAX=v8.1.2000
+export COURSE=ALL00
+export COURSE_MIN=v7.4.1150
+export COURSE_MAX=v7.4.1170
 
 # Number of threads to use in local run
-export NUM_THREADS=128
+export NUM_THREADS=100
 
 # Vim source repo goes here
 export SRCDIR="$(dirname $(dirname $(readlink -f $0)))/tmp/vim-src"

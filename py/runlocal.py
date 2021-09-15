@@ -67,6 +67,7 @@ for p in range(1155, 1163):
 # options play well together
 for p in range(1115):
     exclude.add('v7.3.%s' % '{:03d}'.format(p))
+exclude.add('v7.3')
 
 # Course select
 course = os.environ['COURSE']
@@ -77,7 +78,7 @@ elif course == 'ALL000':
 elif course == 'ALL00':
     versions = [v for v in versions if re.match(r'^.*00$', v)]
 elif course == 'ALL0':
-    versions = [v for v in versions if re.match(r'^.*2$', v)]
+    versions = [v for v in versions if re.match(r'^.*0$', v)]
 elif course.startswith('MINMAX'):
     nversions = []
     min = os.environ['COURSE_MIN']

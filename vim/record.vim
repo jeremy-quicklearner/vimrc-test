@@ -6,6 +6,9 @@ let s:labelpath = split(expand('<sfile>:p:h') . '/label.vim')[-1]
 " Keys typed so far, not yet recorded
 let s:sofar = ''
 
+" Tracehash of most recent capture
+let s:lastcap = ''
+
 function! s:Start(startfrom, rows, cols)
     if empty(a:startfrom)
         if a:rows + 3 ># &lines
@@ -69,10 +72,10 @@ function! s:Escape()
     elseif choice ==# 2
         call s:RecordKeys()
         call VimrcTestBedCapture()
+        let s:lastcap = g:vimrc_test_subject.trace
     elseif choice ==# 3
         call s:RecordKeys()
-        let finaltrace = g:vimrc_test_subject.trace
-        let finalhash = sha256(finaltrace)
+        let finalhash = sha256(s:lastcap)
         let dir = g:vimrc_test_subject.dir
         call VimrcTestBedStop()
         let label = '$NO$LABEL$'
@@ -140,8 +143,7 @@ endfunction
 function! VimrcTestRecordLoop()
     let chr = 0
     while !chr
-        sleep 100m
-        call term_wait(g:vimrc_test_subject.termnr)
+        eall term_wait(g:vimrc_test_subject.termnr)
         redraw
         let chr = getchar(0)
     endwhile

@@ -67,6 +67,17 @@ function! s:WaitForSignal(unchangedsignalcount)
     endwhile
 endfunction
 
+function! s:IndirectSend(keys)
+    if g:vimrc_test_subject.signalcount ==# -1
+        throw 'Testbed has not started'
+    endif
+    let towrite = [a:keys . "\<Ignore>"]
+    call writefile(towrite, g:vimrc_test_subject.dir . "/keybuf", "s")
+    let unchangedsignalcount = g:vimrc_test_subject.signalcount
+    call term_sendkeys(g:vimrc_test_subject.termnr, '$')
+    call s:WaitForSignal(unchangedsignalcount)
+endfunction
+
 function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     if g:vimrc_test_subject.signalcount !=# -1
         throw 'Testbed already started'
@@ -83,7 +94,6 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     " Create a new named pipe - the Signal Pipe
     let signalpipe = a:sessiondir . '/signal'
     silent call system('mkfifo ' . signalpipe)
-    "call writefile([], signalpipe, 's')
 
     " Need three extra rows for the Testbed Vim instance - tabline, statusline,
     " and ex command line
@@ -145,27 +155,13 @@ function! VimrcTestBedCapture()
     " writes to the signal pipe. The capture needs to involve two separate
     " events inside the subject, so that the subject may return to its event
     " loop after redrawing
-    let unchangedsignalcount = g:vimrc_test_subject.signalcount
-    call term_sendkeys(
-   \    g:vimrc_test_subject.termnr,
-   \    ":call VimrcTestSubjectPreCapture()\n"
-   \)
-    call s:WaitForSignal(unchangedsignalcount)
+    call s:IndirectSend(":call VimrcTestSubjectPreCapture()\n")
 
     " VimrcTestSubjectCapture is part of subject.vim. It causes the Subject
     " Vim instance to write the message history and Wince model to files in
     " the capture directory. Once done, it writes one character to the signal
     " pipe
-    let unchangedsignalcount = g:vimrc_test_subject.signalcount
-    call term_sendkeys(
-   \    g:vimrc_test_subject.termnr,
-   \    ":call VimrcTestSubjectCapture('" . capname . "')\n"
-   \)
-
-    " Wait for that character to appear in the channel from tailing the signal
-    " pipe, and for any terminal updates. This avoids dumping the terminal
-    " before the Subject is ready
-    call s:WaitForSignal(unchangedsignalcount)
+    call s:IndirectSend(":call VimrcTestSubjectCapture('" . capname . "')\n")
 
     call term_wait(g:vimrc_test_subject.termnr, 200)
 
@@ -186,7 +182,11 @@ function! VimrcTestBedCapture()
         endif
 
         " Message history
-        let act = readfile(capdir . '/messages')
+        try
+            let act = readfile(capdir . '/messages')
+        catch /E484/
+            throw 'Messages Missing'
+        endtry
         let exp = readfile(expcapdir . '/messages')
         let actlen = len(act)
         let explen = len(exp)
@@ -198,6 +198,13 @@ function! VimrcTestBedCapture()
                 throw 'Message history at ' . capname . ' does not match expected'
             endif
         endfor
+
+        " Wince Model
+        let act = json_decode(readfile(capdir . '/wince')[0])
+        let exp = json_decode(readfile(expcapdir . '/wince')[0])
+        if act !=# exp
+            throw 'Wince model at ' . capname . ' does not match expected'
+        endif
 
         " Terminal
         let act = readfile(capdir . '/screen')
@@ -227,13 +234,6 @@ function! VimrcTestBedCapture()
                 throw 'Terminal contents at ' . capname . ' do not match expected'
             endif
         endfor
-
-        " Wince Model
-        let act = json_decode(readfile(capdir . '/wince')[0])
-        let exp = json_decode(readfile(expcapdir . '/wince')[0])
-        if act !=# exp
-            throw 'Wince model at ' . capname . ' does not match expected'
-        endif
     endif
 
     redraw
@@ -249,7 +249,7 @@ function! s:Feedkeys(keys)
         throw 'Cannot pass \$\$ as it would mess up testbed implementation'
     endif
 
-    call term_sendkeys(g:vimrc_test_subject.termnr, a:keys)
+    call s:IndirectSend(a:keys)
     let g:vimrc_test_subject.trace .= '$$KEYS' . a:keys . '$$'
 endfunction
 
@@ -277,8 +277,14 @@ function! VimrcTestBedStop()
         throw 'Testbed has not started'
     endif
     call term_sendkeys(g:vimrc_test_subject.termnr, "\<esc>:qa!\n")
+    let waitcount = 0
     while index(split(term_getstatus(g:vimrc_test_subject.termnr), ','), 'finished') ==# -1
         call term_wait(g:vimrc_test_subject.termnr, 100)
+        " Five seconds
+        if waitcount >=# 100
+            break
+        endif
+        let waitcount += 1
     endwhile
     call ch_close(g:vimrc_test_subject.channel)
     call job_stop(g:vimrc_test_subject.job)
