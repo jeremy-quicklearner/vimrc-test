@@ -58,6 +58,17 @@ for p in range(2137, 2142):
 for p in range(791, 829):
     exclude.add('v8.0.%s' % '{:04d}'.format(p))
 
+# writefile() with Fsync fails when writing to a pipe
+for p in range(1305, 1335):
+    exclude.add('v8.0.%s' % '{:04d}'.format(p))
+
+# Some sort of memory-related bug
+exclude.add('v8.1.0580')
+
+# QuickFixLine highlight group is broken
+for p in range(2029, 2040):
+    exclude.add('v8.1.%s' % '{:04d}'.format(p))
+
 # Issues with redrawing that cause a race condition between subject and testbed
 # Probably addressed by keybuf workaround
 #for p in range(1587, 1909):

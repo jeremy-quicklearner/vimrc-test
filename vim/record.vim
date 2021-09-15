@@ -1,6 +1,16 @@
 source <sfile>:p:h/testbed.vim
 source <sfile>:p:h/label.vim
 
+let s:candir = expand('<sfile>:p:h') . '/canned/'
+let s:canlist = ["\nChoose canned sequence:"]
+let s:candict = {}
+let cancount = 0
+for dirname in readdir(s:candir)
+    let cancount += 1
+    call add(s:canlist, cancount . ' ' . dirname)
+    let s:candict[cancount] = dirname
+endfor
+
 let s:labelpath = split(expand('<sfile>:p:h') . '/label.vim')[-1]
 
 " Keys typed so far, not yet recorded
@@ -61,19 +71,16 @@ endfunction
 function! s:Escape()
     let choice = inputlist([
    \    'Select an option:',
-   \    '1. Pass ''$'' keystroke to subject',
-   \    '2. Capture',
-   \    '3. Stop Recording',
-   \    '4. Resize terminal'
+   \    '1. Capture',
+   \    '2. Stop Recording',
+   \    '3. Resize terminal',
+   \    '4. Input canned keystrokes'
    \])
     if choice ==# 1
-        let s:sofar .= '$'
-        call term_sendkeys(g:vimrc_test_subject.termnr, '$')
-    elseif choice ==# 2
         call s:RecordKeys()
         call VimrcTestBedCapture()
         let s:lastcap = g:vimrc_test_subject.trace
-    elseif choice ==# 3
+    elseif choice ==# 2
         call s:RecordKeys()
         let finalhash = sha256(s:lastcap)
         let dir = g:vimrc_test_subject.dir
@@ -132,11 +139,17 @@ function! s:Escape()
 
         call writefile([labelline], s:labelpath, 'a')
         exit
-    elseif choice ==# 4
+    elseif choice ==# 3
         let rows = input("\nRows? (current: " . string(&lines - 3) . ') ')
         let cols = input("\nColumns? (current: " . string(&columns) . ') ')
         call s:RecordKeys()
         call s:Resize(rows, cols)
+    elseif choice ==# 4
+        echom readdir(s:candir)
+        let choice = inputlist(s:canlist)
+        let keyslist = readfile(s:candir . s:candict[choice])
+        let keysstr = join(keyslist, "\<cr>")
+        call feedkeys(keysstr, 'mt')
     endif
 endfunction
 
