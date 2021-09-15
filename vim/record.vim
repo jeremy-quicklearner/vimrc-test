@@ -143,7 +143,7 @@ endfunction
 function! VimrcTestRecordLoop()
     let chr = 0
     while !chr
-        eall term_wait(g:vimrc_test_subject.termnr)
+        call term_wait(g:vimrc_test_subject.termnr)
         redraw
         let chr = getchar(0)
     endwhile

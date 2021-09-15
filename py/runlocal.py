@@ -12,7 +12,7 @@ cmd = 'git ls-remote --tags https://github.com/vim/vim'
 versions = subprocess.run(cmd, capture_output=True, text=True, shell=True).stdout
 versions = [re.sub(r'^.*refs/tags/v', '', v) for v in versions.split('\n')][:-1]
 
-# Only support 7.3+
+# Only Consider 7.3+
 versions = [v for v in versions if not re.match(r'^7\.[0-2]', v)]
 if '8.2.2366' not in versions:
     raise Exception('Failed to fetch tags from Github')
@@ -36,38 +36,39 @@ versions = ['v' + v for v in versions]
 # Exclude unsupported versions with breaking bugs
 exclude = set([])
 
-# Vimscript bugs
-exclude.add('v8.2.2250')
+# Require at least 7.3.1115 - first version in which number and relativenumber
+# options play well together
+for p in range(1115):
+    exclude.add('v7.3.%s' % '{:03d}'.format(p))
+exclude.add('v7.3')
 
-# Top tilde under buffer text is missing in these versions
-for p in range(936, 1165):
-    exclude.add('v8.2.%s' % '{:04d}'.format(p))
-
-# Issues with redrawing that cause a race condition between subject and testbed
-for p in range(1587, 1909):
-    exclude.add('v8.1.%s' % p)
-
-# Colours are different
-for p in range(791, 829):
-    exclude.add('v8.0.%s' % '{:04d}'.format(p))
-
-# Issues calling autoloaded funcrefs
-for p in range(2137, 2142):
+# Issues with typing
+for p in range(1155, 1163):
     exclude.add('v7.4.%s' % '{:04d}'.format(p))
 
 # Issues with funcrefs
 for p in range(1577, 1581):
     exclude.add('v7.4.%s' % '{:04d}'.format(p))
 
-# Issues with typing
-for p in range(1155, 1163):
+# Issues calling autoloaded funcrefs
+for p in range(2137, 2142):
     exclude.add('v7.4.%s' % '{:04d}'.format(p))
 
-# Require at least 7.3.1115 - first version in which number and relativenumber
-# options play well together
-for p in range(1115):
-    exclude.add('v7.3.%s' % '{:03d}'.format(p))
-exclude.add('v7.3')
+# Colours are different
+for p in range(791, 829):
+    exclude.add('v8.0.%s' % '{:04d}'.format(p))
+
+# Issues with redrawing that cause a race condition between subject and testbed
+# Probably addressed by keybuf workaround
+#for p in range(1587, 1909):
+#    exclude.add('v8.1.%s' % p)
+
+# Top tilde under buffer text is missing in these versions
+for p in range(936, 1165):
+    exclude.add('v8.2.%s' % '{:04d}'.format(p))
+
+# Vimscript bugs
+exclude.add('v8.2.2250')
 
 # Course select
 course = os.environ['COURSE']
