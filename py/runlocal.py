@@ -70,9 +70,8 @@ for p in range(2029, 2040):
     exclude.add('v8.1.%s' % '{:04d}'.format(p))
 
 # Issues with redrawing that cause a race condition between subject and testbed
-# Probably addressed by keybuf workaround
-#for p in range(1587, 1909):
-#    exclude.add('v8.1.%s' % p)
+for p in range(1587, 1909):
+    exclude.add('v8.1.%s' % p)
 
 # Top tilde under buffer text is missing in these versions
 for p in range(936, 1165):
@@ -80,6 +79,7 @@ for p in range(936, 1165):
 
 # Vimscript bugs
 exclude.add('v8.2.2250')
+exclude.add('v8.2.2670')
 
 # Course select
 course = os.environ['COURSE']

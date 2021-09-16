@@ -67,12 +67,13 @@ try
            \    trace,
            \    1
            \)
-            if !filereadable(g:vimrc_test_sessionname . '/' . label . '/err') ||
-           \   index([
+            let errfile = g:vimrc_test_sessionname . '/' . label . '/err'
+            if !filereadable(errfile) || readfile(errfile)[-1] =~ join([
+           \       'Terminal contents at',
            \       'Signal timeout',
            \       'Subject stalled',
            \       'Messages Missing'
-           \   ], readfile(g:vimrc_test_sessionname . '/' . label . '/err')[-1]) ==# -1
+           \   ], '|')
                 call writefile([i], g:vimrc_test_sessionname . '/' . label . '/retry', 's')
                 break
             endif

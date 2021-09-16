@@ -8,9 +8,9 @@
 # MINMAX - Test versions between a minimum and a maximum (inclusive)
 # MINMAX0 - Test versions ending in 0 between a minimum and a maximum (inclusive)
 # MINMAX00 - Test versions ending in 00 between a minimum and a maximum (inclusive)
-export COURSE=ALL00
-export COURSE_MIN=v8.1.2020
-export COURSE_MAX=v8.1.2040
+export COURSE=ALL0
+export COURSE_MIN=v8.2.2660
+export COURSE_MAX=v8.2.2680
 
 # Number of threads to use in local run
 export NUM_THREADS=100

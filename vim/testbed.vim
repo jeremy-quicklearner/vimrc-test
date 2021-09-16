@@ -133,6 +133,42 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     call term_sendkeys(termnr, ":echo 'fresh subject'\<cr>")
 endfunction
 
+function! s:CompareModels(model1, model2)
+    let type1 = type(a:model1)
+    let type2 = type(a:model2)
+    if type1 ==# v:t_dict && type2 ==# v:t_dict
+        for k in keys(a:model1)
+            if !has_key(a:model2, k)
+                return 0
+            endif
+        endfor
+        for [k, v] in items(a:model2)
+            " Afterimage buffer numbers are a bit fuzzy - different versions
+            " of Vim allocate buffer numbers differently. So only check
+            " presence and typing
+            if k ==# 'aibuf'
+                return has_key(a:model1, k) && type(v) ==# type(a:model1[k])
+            endif
+            if !has_key(a:model1, k) || !s:CompareModels(a:model1[k], v)
+                return 0
+            endif
+        endfor
+        return 1
+    elseif type1 ==# v:t_list && type2 ==# v:t_list
+        if len(a:model1) !=# len(a:model2)
+            return 0
+        endif
+        for i in range(len(a:model1))
+            if !s:CompareModels(a:model1[i], a:model2[i])
+                return 0
+            endif
+        endfor
+        return 1
+    else
+        return a:model1 ==# a:model2
+    endif
+endfunction
+
 " Perform a capture
 function! VimrcTestBedCapture()
     if g:vimrc_test_subject.signalcount ==# -1
@@ -202,7 +238,7 @@ function! VimrcTestBedCapture()
         " Wince Model
         let act = json_decode(readfile(capdir . '/wince')[0])
         let exp = json_decode(readfile(expcapdir . '/wince')[0])
-        if act !=# exp
+        if !s:CompareModels(act, exp)
             throw 'Wince model at ' . capname . ' does not match expected'
         endif
 
