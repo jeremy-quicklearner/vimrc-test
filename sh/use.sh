@@ -5,9 +5,9 @@ source $SHELLDIR/config.sh
 
 VIMEXECDIR=$(dirname $(dirname $(readlink -f $0)))/vim
 EXPECTDIR=$(dirname $(dirname $(readlink -f $0)))/expect
-THISSESSIONDIR="$SESSIONDIR/$1"
+THISSESSIONDIR="$SESSIONDIR/use-$1"
 
-if [ -e "$FAILDIR/$1" ]; then
+if [ -e "$BUILDDIR/failed-$1" ]; then
     echo "Failed to compile $1 on a prior attempt"
     exit 0
 fi
@@ -17,7 +17,7 @@ if [[ "$(docker images -q vimrc-test/env-$1 2> /dev/null)" == "" ]]; then
 fi
 
 if [[ "$(docker images -q vimrc-test/env-$1 2> /dev/null)" == "" ]]; then
-    touch $FAILDIR/$1
+    touch $BUILDDIR/failed-$1
     echo "Failed to compile $1"
     exit 0
 fi

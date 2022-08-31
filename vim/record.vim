@@ -29,7 +29,7 @@ function! s:Start(startfrom, rows, cols)
             throw 'Need a wider terminal to accomodate ' . a:cols . ' columns'
         endif
 
-        call VimrcTestBedStart(v:progpath, g:vimrc_test_sessionname, a:rows, a:cols)
+        call VimrcTestBedStart(g:vimrc_test_subjectpath, g:vimrc_test_sessionname, a:rows, a:cols)
     else
         if has_key(g:vimrc_test_label, a:startfrom)
             let sfdict = g:vimrc_test_label[a:startfrom]
@@ -44,7 +44,7 @@ function! s:Start(startfrom, rows, cols)
         let s:reqexists = get(sfdict, 'exists', 0)
 
         let trace = readfile(g:vimrc_test_expectpath . '/' . tracehash . '/trace')[0]
-        call VimrcTestBedExecuteTrace(v:progpath, g:vimrc_test_sessionname, trace, 0)
+        call VimrcTestBedExecuteTrace(g:vimrc_test_subjectpath, g:vimrc_test_sessionname, trace, 0)
     endif
 endfunction
 

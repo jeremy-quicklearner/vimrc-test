@@ -42,6 +42,18 @@ for p in range(1115):
     exclude.add('v7.3.%s' % '{:03d}'.format(p))
 exclude.add('v7.3')
 
+# cursorline only drawn in current window
+for p in range(1277, 1282):
+    exclude.add('v7.3.%s' % p)
+
+# ':options' command is broken
+for p in range(201, 230):
+    exclude.add('v7.4.%s' % p)
+
+# Weird effects of missing type cast
+for p in range(794, 796):
+    exclude.add('v7.4.%s')
+
 # Issues with typing
 for p in range(1155, 1163):
     exclude.add('v7.4.%s' % '{:04d}'.format(p))
@@ -50,9 +62,19 @@ for p in range(1155, 1163):
 for p in range(1577, 1581):
     exclude.add('v7.4.%s' % '{:04d}'.format(p))
 
+# Bug in options window
+exclude.add('v7.4.1808')
+
+# Something goes wrong with the has() checks
+for p in range(2073, 2078):
+    exclude.add('v7.4.%s' % '{:04d}'.format(p))
+
 # Issues calling autoloaded funcrefs
 for p in range(2137, 2142):
     exclude.add('v7.4.%s' % '{:04d}'.format(p))
+
+# Crashes on start
+exclude.add('v8.0.0693')
 
 # Colours are different
 for p in range(791, 829):
@@ -69,12 +91,27 @@ exclude.add('v8.1.0580')
 for p in range(2029, 2040):
     exclude.add('v8.1.%s' % '{:04d}'.format(p))
 
+# Opening quickfix window is broken
+for p in range(1547, 1549):
+    exclude.add('v8.1.%s' % '{:04d}'.format(p))
+
 # Issues with redrawing that cause a race condition between subject and testbed
 for p in range(1587, 1909):
     exclude.add('v8.1.%s' % p)
 
+# Python integration is broken, which breaks vim-plug
+exclude.add('v8.2.0149')
+
+# No / at the start of absolute file paths in tabline
+for p in range(208, 215):
+    exclude.add('v8.2.%s' % '{:04d}'.format(p))
+
 # Top tilde under buffer text is missing in these versions
 for p in range(936, 1165):
+    exclude.add('v8.2.%s' % '{:04d}'.format(p))
+
+# ':options' command is broken
+for p in range(1639, 1642):
     exclude.add('v8.2.%s' % '{:04d}'.format(p))
 
 # Vimscript bugs
@@ -83,7 +120,7 @@ exclude.add('v8.2.2670')
 
 # Course select
 course = os.environ['COURSE']
-if course == 'ALLVIM':
+if course == 'ALL':
     pass
 elif course == 'ALL000':
     versions = [v for v in versions if re.match(r'^.*000$', v)]
@@ -118,11 +155,20 @@ elif course.startswith('MINMAX'):
 else:
     raise Exception('Unknown course %s' % course)
 
+runsh = os.environ['RUNSH']
+vimrcdir = os.environ['VIMRCDIR']
+cmdfmt = '%s %%s %s' % (runsh, vimrcdir)
+
 def runversion(v):
     if v in exclude:
-        return '[%s][skip][Unsupported]\n' %  v
-    cmd = '/home/jeremy/Projects/vimrc-test/sh/run.sh %s /home/jeremy/vim' % v
-    return subprocess.run(cmd, capture_output=True, text=True, shell=True).stdout
+        return '[%s][skip][Unsupported]\n' % v
+    cmd = cmdfmt % v
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        shell=True
+    ).stdout
 
 print('%d versions in course %s' % (len(versions), course))
 starttime = time.time()

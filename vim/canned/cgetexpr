@@ -1,0 +1,2 @@
+:cgetexpr ['a:1:one','b:2:two','c:3:three','d:4:four','e:5:five'] | cwindow | cbottom | call setqflist([], 'a', {'title':'TITLE'})
+

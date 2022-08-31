@@ -1,0 +1,106 @@
+vim/vimhelp.txt            For Vim 7.3+           Last change: 2021 January 15
+
+Author:               Jeremy Lerner <github.com/jeremy-quicklearner>
+License:              MIT
+Homepage:             https://github.com/jeremy-quicklearner/vimrc-test
+
+==============================================================================
+
+1. Intro                                                   *vimrc-test-helpfile*
+
+    This help file exists so that the vimrc tests have a help file they can
+open without any risk of it changing across Vim versions or plugin versions.
+Any change to this file will cause failures in any vimrc tests that open the
+help window.
+
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+tempor incididunt ut labore et dolore magna aliqua. Egestas egestas fringilla
+phasellus faucibus scelerisque eleifend donec pretium vulputate. Pretium
+lectus quam id leo. Viverra tellus in hac habitasse platea dictumst
+vestibulum.  Senectus et netus et malesuada fames ac turpis egestas. Et
+pharetra pharetra massa massa ultricies. Libero volutpat sed cras ornare arcu
+dui vivamus arcu.  Lorem ipsum dolor sit amet consectetur. Tellus elementum
+sagittis vitae et. Ut porttitor leo a diam sollicitudin tempor id. In massa
+tempor nec feugiat nisl pretium fusce. Viverra vitae congue eu consequat ac
+felis. Interdum varius sit amet mattis vulputate. Sit amet facilisis magna
+etiam tempor orci eu. Dapibus ultrices in iaculis nunc sed. Adipiscing elit
+duis tristique sollicitudin nibh sit. Lectus quam id leo in vitae turpis
+massa. Vitae proin sagittis nisl rhoncus mattis.
+
+    Tincidunt arcu non sodales neque sodales ut. Adipiscing elit pellentesque
+habitant morbi tristique senectus et netus. Vulputate dignissim suspendisse in
+est ante. Lacus luctus accumsan tortor posuere ac ut consequat semper viverra.
+Pretium nibh ipsum consequat nisl vel pretium lectus quam. Gravida arcu ac
+tortor dignissim convallis aenean. Felis eget nunc lobortis mattis aliquam
+faucibus. Orci phasellus egestas tellus rutrum. Aliquet lectus proin nibh nisl
+condimentum id venenatis a. Volutpat est velit egestas dui id ornare.
+Fringilla ut morbi tincidunt augue interdum velit euismod in. Aliquam sem
+fringilla ut morbi. Eget nunc lobortis mattis aliquam faucibus. Ullamcorper
+sit amet risus nullam eget felis. Vel quam elementum pulvinar etiam non quam
+lacus suspendisse. Gravida arcu ac tortor dignissim convallis aenean et
+tortor.  Blandit libero volutpat sed cras ornare arcu dui vivamus. Risus in
+hendrerit gravida rutrum quisque non.
+
+    Velit euismod in pellentesque massa placerat duis ultricies lacus. Rhoncus
+urna neque viverra justo. Pretium lectus quam id leo. Nisl nunc mi ipsum
+faucibus vitae. Pretium lectus quam id leo in vitae turpis. Egestas fringilla
+phasellus faucibus scelerisque eleifend. Vitae aliquet nec ullamcorper sit
+amet risus nullam eget. Scelerisque mauris pellentesque pulvinar pellentesque
+habitant morbi tristique senectus et. Lacus suspendisse faucibus interdum
+posuere lorem ipsum dolor sit amet. Tempor nec feugiat nisl pretium fusce id.
+In massa tempor nec feugiat. Sit amet cursus sit amet dictum sit amet justo
+donec. Pulvinar etiam non quam lacus suspendisse faucibus interdum posuere.
+Purus gravida quis blandit turpis cursus.
+
+    Curabitur vitae nunc sed velit dignissim sodales ut eu sem. Viverra mauris
+in aliquam sem fringilla. Velit aliquet sagittis id consectetur purus. Rhoncus
+mattis rhoncus urna neque viverra. Tortor consequat id porta nibh. Curabitur
+gravida arcu ac tortor dignissim convallis aenean et. Pharetra sit amet
+aliquam id diam maecenas. Imperdiet massa tincidunt nunc pulvinar sapien et
+ligula ullamcorper malesuada. Erat imperdiet sed euismod nisi. Dictumst
+vestibulum rhoncus est pellentesque elit ullamcorper dignissim.
+
+    Fermentum et sollicitudin ac orci phasellus egestas tellus. Aliquam nulla
+facilisi cras fermentum. Enim nunc faucibus a pellentesque sit amet porttitor
+eget. Elementum curabitur vitae nunc sed velit. Urna condimentum mattis
+pellentesque id nibh. Pellentesque habitant morbi tristique senectus. At urna
+condimentum mattis pellentesque. Non nisi est sit amet facilisis magna etiam.
+Sapien pellentesque habitant morbi tristique senectus et netus. Massa sed
+elementum tempus egestas sed sed risus. Arcu bibendum at varius vel pharetra.
+Elementum curabitur vitae nunc sed velit dignissim sodales. Aliquam etiam erat
+velit scelerisque. Quis ipsum suspendisse ultrices gravida. Sagittis eu
+volutpat odio facilisis mauris sit amet. Urna et pharetra pharetra massa.
+Lorem ipsum dolor sit amet. Nunc sed id semper risus in hendrerit.
+
+    Nec tincidunt praesent semper feugiat nibh sed pulvinar proin gravida. Leo
+a diam sollicitudin tempor id eu nisl nunc. Aliquam sem et tortor consequat id
+porta nibh venenatis cras. Condimentum vitae sapien pellentesque habitant
+morbi tristique senectus et. Viverra justo nec ultrices dui sapien eget mi.
+Tellus rutrum tellus pellentesque eu tincidunt tortor. Quis risus sed
+vulputate odio ut enim blandit. Tellus cras adipiscing enim eu turpis egestas.
+Lacus sed viverra tellus in hac habitasse platea dictumst vestibulum. Neque
+ornare aenean euismod elementum nisi quis eleifend. Sit amet aliquam id diam
+maecenas ultricies mi eget. Ut tristique et egestas quis ipsum suspendisse
+ultrices.  Cras adipiscing enim eu turpis egestas pretium aenean pharetra. Sit
+amet venenatis urna cursus eget nunc scelerisque. Et egestas quis ipsum
+suspendisse ultrices gravida.
+
+    Varius vel pharetra vel turpis nunc eget. Euismod elementum nisi quis
+eleifend quam adipiscing vitae. Amet nisl purus in mollis nunc. Enim eu turpis
+egestas pretium aenean pharetra magna. Curabitur vitae nunc sed velit
+dignissim sodales ut eu. Tincidunt augue interdum velit euismod in
+pellentesque massa placerat. Magna eget est lorem ipsum dolor sit amet
+consectetur adipiscing.  Sociis natoque penatibus et magnis dis. Blandit massa
+enim nec dui nunc mattis enim ut. Enim neque volutpat ac tincidunt vitae
+semper quis lectus.
+
+    Tellus id interdum velit laoreet id. Imperdiet dui accumsan sit amet.
+Etiam tempor orci eu lobortis. Leo urna molestie at elementum eu facilisis
+sed odio morbi. Vivamus arcu felis bibendum ut tristique et egestas quis.
+Tellus integer feugiat scelerisque varius morbi enim nunc faucibus a. Magna
+fringilla urna porttitor rhoncus dolor purus non enim praesent. Turpis egestas
+integer eget aliquet nibh praesent tristique magna sit. Non diam phasellus
+vestibulum lorem sed. Venenatis cras sed felis eget velit aliquet sagittis id
+consectetur.  Blandit cursus risus at ultrices mi tempus imperdiet.
+
+vim:tw=78:ts=4:ft=help:norl:

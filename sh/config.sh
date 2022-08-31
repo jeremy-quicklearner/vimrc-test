@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Location of vimrc repo (jeremy-quicklearner/vim)
+export VIMRCDIR="/home/jeremy/vim"
+
 # Test courses:
 # ALLVIM - Test against every supported version of Vim
 # ALL0 - Test against supported versions ending in 0
@@ -8,12 +11,12 @@
 # MINMAX - Test versions between a minimum and a maximum (inclusive)
 # MINMAX0 - Test versions ending in 0 between a minimum and a maximum (inclusive)
 # MINMAX00 - Test versions ending in 00 between a minimum and a maximum (inclusive)
-export COURSE=ALL0
-export COURSE_MIN=v8.2.2660
-export COURSE_MAX=v8.2.2680
+export COURSE=MINMAX
+export COURSE_MIN=v8.1.2010
+export COURSE_MAX=v8.1.2020
 
 # Number of threads to use in local run
-export NUM_THREADS=100
+export NUM_THREADS=50
 
 # Vim source repo goes here
 export SRCDIR="$(dirname $(dirname $(readlink -f $0)))/tmp/vim-src"

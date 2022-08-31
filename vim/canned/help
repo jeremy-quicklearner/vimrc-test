@@ -1,0 +1,2 @@
+:silent help vimrc-test-helpfile | normal LjH
+

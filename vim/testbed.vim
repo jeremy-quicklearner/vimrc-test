@@ -62,7 +62,7 @@ function! s:WaitForSignal(unchangedsignalcount)
             throw 'Command unknown to subject'
         endif
 
-        call writefile(['LINE ' . theline], g:vimrc_test_subject.dir . '/channel', 'as')
+        call writefile([g:vimrc_test_subject.signalcount . ' LINE ' . theline], g:vimrc_test_subject.dir . '/channel', 'as')
         sleep 50m
     endwhile
 endfunction
@@ -109,11 +109,16 @@ function! VimrcTestBedStart(subjectpath, sessiondir, rows, cols)
     " Start the Subject Vim instance in a terminal window. Make it source
     " subject.vim on startup and tell it the name of the signal pipe
     enew!
-    let termnr = term_start(
-   \    [a:subjectpath, '-w', a:sessiondir . '/keylog', '-S', s:subjectscript],
-   \    {'curwin':1}
-   \)
-    call term_sendkeys(termnr, a:sessiondir . ' ')
+    let termnr = term_start([
+   \    a:subjectpath,
+   \    '-w', a:sessiondir . '/keylog',
+   \    '-c', 'let g:vimrc_test_subject_dir = ' . "'" . a:sessiondir . "'",
+   \    '-S', s:subjectscript
+   \], {
+   \    'curwin': 1,
+   \    'env': {'VIM': '', 'VIMRUNTIME': ''}
+   \})
+    "call term_sendkeys(termnr, a:sessiondir . ' ')
 
     " Toggle off/on the 'number' option to avoid a weird bug in older Vims -
     " some range between 8.0.500ish to 8.2.1500ish

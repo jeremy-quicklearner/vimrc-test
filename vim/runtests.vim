@@ -22,7 +22,7 @@ try
             for requirement in testpoint.has
                 if system(
                \    g:vimrc_test_subjectpath .
-               \    ' -e -s -c "if has(''' . 
+               \    ' -e -c "if has(''' . 
                \    requirement .
                \    ''') | cquit | else | exit | endif" > /dev/null 2>&1 ; echo -n $?'
                \) ==# 0
@@ -59,7 +59,7 @@ try
     
         let trace = readfile(g:vimrc_test_expectpath . '/' . testpoint.tracehash . '/trace')[0]
     
-        for i in range(10)
+        for i in range(3)
             " This function comes from testbed.vim
             call VimrcTestBedExecuteTrace(
            \    g:vimrc_test_subjectpath,
