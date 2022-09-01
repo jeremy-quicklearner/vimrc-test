@@ -41,7 +41,9 @@ endif
 " changes from one version to another
 function! VimrcTestSubjectWinceOptionStatusLine()
     let sl = wince_option#StatusLine()
-    return substitute(sl, '\[%c\]\[%l\/%L\]\[%p%%\]', '[c][l/L][%%]', '')
+    let sl = substitute(sl, '\[%n\]', '[X]', '')
+    let sl = substitute(sl, '\[%c\]\[%l\/%L\]\[%p%%\]', '[c][l/L][%%]', '')
+    return sl
 endfunction
 let g:wince_uberwingrouptype.option.statuslines = [
 \   '%!VimrcTestSubjectWinceOptionStatusLine()'
@@ -62,6 +64,23 @@ function! s:ObfuscateOptions()
     endif
 endfunction
 call jer_pec#Register(function('s:ObfuscateOptions'), [], 0, 9999999, 1, 0, 1)
+
+" Buffer numbers change from version to version. Fudge any output that
+" contains them.
+function! VimrcTestSubjectDefaultStatusLine()
+    "                                     v
+    let statusline ='%3*%y%4*%r%4*%m%<%1*[X]%1*[%f]%5*%a' . SpaceIfArgs() . '%1*%=%<'
+    if exists('g:wince_version')
+        let statusline .= wince_user#SubwinFlagsForGlobalStatusline()
+    endif
+    let statusline .= '%6*' . DiffFlag() . '%3*[%c][%l/%L][%p%%]'
+    return statusline
+endfunction
+set statusline=%!VimrcTestSubjectDefaultStatusLine()
+
+let g:wince_uberwingrouptype.help.statuslines = [
+\   '%4*[Help]%<%1*[X]%1*[%f]%=%<%4*[%c][%l/%L][%p%%]'
+\]
 
 " Extra step before a capture. See testbed.vim
 function! VimrcTestSubjectPreCapture()

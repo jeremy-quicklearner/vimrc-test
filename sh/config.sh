@@ -12,8 +12,8 @@ export VIMRCDIR="/home/jeremy/vim"
 # MINMAX0 - Test versions ending in 0 between a minimum and a maximum (inclusive)
 # MINMAX00 - Test versions ending in 00 between a minimum and a maximum (inclusive)
 export COURSE=MINMAX
-export COURSE_MIN=v8.1.2010
-export COURSE_MAX=v8.1.2020
+export COURSE_MIN=v8.2.4690
+export COURSE_MAX=v8.2.4710
 
 # Number of threads to use in local run
 export NUM_THREADS=50
